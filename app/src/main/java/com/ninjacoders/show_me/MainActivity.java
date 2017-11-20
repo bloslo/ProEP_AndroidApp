@@ -28,7 +28,6 @@ import android.widget.Toast;
 
 import com.github.faucamp.simplertmp.RtmpHandler;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -49,10 +48,18 @@ import net.ossrs.yasea.SrsEncodeHandler;
 import net.ossrs.yasea.SrsPublisher;
 import net.ossrs.yasea.SrsRecordHandler;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Date;
+
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 
 public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpListener,
         SrsRecordHandler.SrsRecordListener, SrsEncodeHandler.SrsEncodeListener {
@@ -133,6 +140,8 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
      * Time when the location was updated respresented as a String.
      */
     private String mLastUpdateTime;
+
+    private Socket socket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -220,6 +229,31 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         createLocationCallback();
         createLocationRequest();
         buildLocationSettingsRequest();
+
+        try {
+            socket =IO.socket("http://40.68.124.79:1903/");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Failed to connect to location service!", Toast.LENGTH_SHORT).show();
+        }
+
+        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                Toast.makeText(getApplicationContext(), "Connected to location service", Toast.LENGTH_SHORT).show();
+            }
+        }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                Toast.makeText(getApplicationContext(), "Disconnected from location service", Toast.LENGTH_SHORT).show();
+            }
+        }).on(Socket.EVENT_ERROR, new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                Toast.makeText(getApplicationContext(), "Failed to emit location data!", Toast.LENGTH_SHORT).show();
+            }
+        });
+        socket.connect();
     }
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
@@ -334,6 +368,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
                         //noinspection MissingPermission
                         mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                                 mLocationCallback, Looper.myLooper());
+                        emitLocation();
                     }
                 })
                 .addOnFailureListener(this, new OnFailureListener() {
@@ -383,6 +418,20 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
                         mRequestingLocationUpdates = false;
                     }
                 });
+    }
+
+    private void emitLocation() {
+        if (mCurrentLocation != null) {
+            JSONObject json = new JSONObject();
+            try {
+                json.put("long", mCurrentLocation.getLongitude());
+                json.put("lat", mCurrentLocation.getLatitude());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            socket.emit("phonemeta", json);
+        }
     }
 
     /**
