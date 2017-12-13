@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
      */
     private String mLastUpdateTime;
 
-    private Socket socket;
+//    private Socket socket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -230,10 +230,10 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         createLocationRequest();
         buildLocationSettingsRequest();
 
-        connectSocket();
+//        connectSocket();
     }
 
-    private void connectSocket() {
+    /* private void connectSocket() {
         try {
             socket = IO.socket("http://40.68.124.79:1903/");
         } catch (URISyntaxException e) {
@@ -262,7 +262,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
             }
         });
         socket.connect();
-    }
+    } */
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
@@ -429,7 +429,6 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         mRequestingLocationUpdates = false;
-                        socket.disconnect();
                     }
                 });
     }
@@ -447,7 +446,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
                 e.printStackTrace();
             }
             Log.i(TAG, "Current Location: " + json.toString());
-            socket.emit("phonemeta", json);
+            Singleton.getInstance().getSocket().emit("phonemeta", json);
         }
     }
 
