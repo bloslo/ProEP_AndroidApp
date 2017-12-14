@@ -229,40 +229,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         createLocationCallback();
         createLocationRequest();
         buildLocationSettingsRequest();
-
-//        connectSocket();
     }
-
-    /* private void connectSocket() {
-        try {
-            socket = IO.socket("http://40.68.124.79:1903/");
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-//                        Toast.makeText(getApplicationContext(), "Failed to connect to location service!", Toast.LENGTH_SHORT).show();
-            Log.i(TAG, "Failed to connect to location service!");
-        }
-
-        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-//                            Toast.makeText(getApplicationContext(), "Connected to location service", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "Connected to location service");
-            }
-        }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-//                            Toast.makeText(getApplicationContext(), "Disconnected from location service", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "Disconnected from location service");
-            }
-        }).on(Socket.EVENT_ERROR, new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-//                            Toast.makeText(getApplicationContext(), "Failed to emit location data!", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "Failed to emit location data!");
-            }
-        });
-        socket.connect();
-    } */
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
@@ -371,6 +338,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         // Begin by checking if the device has the necessary location settings.
         mSettingsClient.checkLocationSettings(mLocationSettingsRequest)
                 .addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
+                    @SuppressLint("MissingPermission")
                     @Override
                     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
                         Log.i(TAG, "All location settings are satisfied.");
@@ -583,6 +551,14 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
         // Remove location updates to save battery.
         stopLocationUpdates();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        // Remove the listeners.
+        Singleton.getInstance().getSocket().off("phonemeta");
     }
 
     @Override

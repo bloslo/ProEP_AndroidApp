@@ -30,6 +30,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/registerPassword"
         android:hint="Password"
+        android:inputType="textPassword"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_below="@id/registerUsername"
