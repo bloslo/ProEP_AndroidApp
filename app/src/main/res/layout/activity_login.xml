@@ -24,7 +24,8 @@
         android:layout_below="@id/title"
         android:layout_alignParentRight="true"
         android:layout_alignParentLeft="true"
-        android:layout_marginTop="20dp" />
+        android:layout_marginTop="20dp"
+        android:maxLines="1" />
 
     <EditText
         android:layout_width="wrap_content"
@@ -35,7 +36,8 @@
         android:layout_below="@id/usernameInput"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
-        android:layout_marginTop="10dp" />
+        android:layout_marginTop="10dp"
+        android:maxLines="1" />
 
     <LinearLayout
         android:layout_width="fill_parent"
