@@ -23,7 +23,8 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_below="@id/regHeading"
-        android:layout_marginTop="20dp" />
+        android:layout_marginTop="20dp"
+        android:maxLines="1" />
 
     <EditText
         android:layout_width="wrap_content"
@@ -34,7 +35,20 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_below="@id/registerUsername"
-        android:layout_marginTop="10dp" />
+        android:layout_marginTop="10dp"
+        android:maxLines="1" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/repeatPassword"
+        android:hint="Repeat password"
+        android:inputType="textPassword"
+        android:layout_below="@id/registerPassword"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:maxLines="1" />
 
     <EditText
         android:layout_width="wrap_content"
@@ -43,8 +57,9 @@
         android:hint="Email"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
-        android:layout_below="@id/registerPassword"
-        android:layout_marginTop="10dp" />
+        android:layout_below="@id/repeatPassword"
+        android:layout_marginTop="10dp"
+        android:maxLines="1" />
 
     <Button
         android:layout_width="wrap_content"
