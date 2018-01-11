@@ -40,7 +40,7 @@ public class Singleton {
      */
     private void connectSocket() {
         try {
-            socket = IO.socket("http://40.68.124.79:1903/");
+            socket = IO.socket("http://showmedocker.zapto.org:1903/");
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
