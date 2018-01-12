@@ -12,6 +12,7 @@ import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -23,7 +24,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.github.faucamp.simplertmp.RtmpHandler;
@@ -53,12 +53,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.SocketException;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Date;
 
-import io.socket.client.IO;
-import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 
 public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpListener,
@@ -69,9 +66,12 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     private Button btnSwitchCamera;
 
     private SharedPreferences sp;
-    private String rtmpUrl = "rtmp://40.68.124.79:1984/show/stream";
+    private String rtmpUrl = "rtmp://showmedocker.zapto.org:1984/show/";
+    private String streamName = "stream";
 
     private SrsPublisher mPublisher;
+
+    private Boolean exit = false;
 
     /**
      * Code used in requesting runtime permissions.
@@ -141,8 +141,6 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
      */
     private String mLastUpdateTime;
 
-//    private Socket socket;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -155,11 +153,6 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
         // restore data
         sp = getSharedPreferences("show-me", MODE_PRIVATE);
-        rtmpUrl = sp.getString("rtmpUrl", rtmpUrl);
-
-        // initialize url
-        final EditText efu = (EditText) findViewById(R.id.url);
-        efu.setText(rtmpUrl);
 
         btnStream = (Button) findViewById(R.id.stream);
         btnSwitchCamera = (Button) findViewById(R.id.switch_cam);
@@ -173,28 +166,32 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         mPublisher.setVideoHDMode();
         mPublisher.startCamera();
 
+        Singleton.getInstance().getSocket().on("initStream", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                final JSONObject data = (JSONObject) args[0];
+
+                try {
+                    if (data.has("succeed") && data.getBoolean("succeed")) {
+                        streamName = data.getString("data");
+                        Log.i(TAG, "Stream name: " + streamName);
+                        startStream();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         btnStream.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (btnStream.getText().toString().contentEquals("stream")) {
-                    rtmpUrl = efu.getText().toString();
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putString("rtmpUrl", rtmpUrl);
-                    editor.apply();
-
-                    mPublisher.switchToSoftEncoder();
-                    mPublisher.startPublish(rtmpUrl);
-                    mPublisher.startCamera();
-
-                    Toast.makeText(getApplicationContext(), "Use soft encoder", Toast.LENGTH_SHORT).show();
-
-                    btnStream.setText("stop");
-
-                    // Requests start of location updates.
-                    // Does nothing if updates have already been requested.
-                    if (!mRequestingLocationUpdates) {
-                        mRequestingLocationUpdates = true;
-                        startLocationUpdates();
+                    if (streamName.equals("stream")) {
+                        Singleton.getInstance().getSocket().emit("initStream");
+                    } else {
+                        // Reuse the old UUID.
+                        startStream();
                     }
                 } else if (btnStream.getText().toString().contentEquals("stop")) {
                     mPublisher.stopPublish();
@@ -229,6 +226,27 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
         createLocationCallback();
         createLocationRequest();
         buildLocationSettingsRequest();
+    }
+
+    private void startStream() {
+        mPublisher.switchToSoftEncoder();
+        mPublisher.startPublish(rtmpUrl + streamName);
+        mPublisher.startCamera();
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), "Use soft encoder", Toast.LENGTH_SHORT).show();
+                btnStream.setText("stop");
+            }
+        });
+
+        // Requests start of location updates.
+        // Does nothing if updates have already been requested.
+        if (!mRequestingLocationUpdates) {
+            mRequestingLocationUpdates = true;
+            startLocationUpdates();
+        }
     }
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
@@ -532,6 +550,22 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     }
 
     @Override
+    public void onBackPressed() {
+        if (exit) {
+            finish();
+        } else {
+            Toast.makeText(getApplicationContext(), "Press Back again to Exit.", Toast.LENGTH_SHORT).show();
+            exit = true;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    exit = false;
+                }
+            }, 3 * 1000);
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         // Within {@code onPause()}, we remove location updates. Here, we resume receiving
@@ -554,17 +588,12 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-
-        // Remove the listeners.
-        Singleton.getInstance().getSocket().off("phonemeta");
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
         mPublisher.stopPublish();
+
+        // Remove the listeners.
+        Singleton.getInstance().getSocket().off("phonemeta");
     }
 
     @Override
