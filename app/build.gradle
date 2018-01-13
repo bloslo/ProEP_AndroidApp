@@ -1,6 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        config {
+            keyAlias 'ShowMeKey'
+            keyPassword 'Tu144Charger'
+            storeFile file('F:/Fontys/Year 4/ProEP/android_key_store.jks')
+            storePassword 'Su30FlankerC'
+        }
+    }
     compileSdkVersion 26
     defaultConfig {
         applicationId "com.ninjacoders.show_me"
@@ -14,6 +22,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
         }
     }
 }
