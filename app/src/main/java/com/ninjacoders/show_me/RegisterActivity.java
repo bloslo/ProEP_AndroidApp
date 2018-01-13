@@ -90,7 +90,7 @@ public class RegisterActivity extends AppCompatActivity {
                 Matcher matcher = pattern.matcher(mail);
 
                 if (isOnline(getApplicationContext())) {
-                    if (name.isEmpty() && pass.isEmpty() && repeatPass.isEmpty() && mail.isEmpty()) {
+                    if (!name.isEmpty() && !pass.isEmpty() && !repeatPass.isEmpty() && !mail.isEmpty()) {
                         if (name.length() > 3) {
                             if (pass.length() >= 8) {
                                 if (pass.equals(repeatPass)) {
